@@ -1,0 +1,39 @@
+# ---- Environment variables & secret ------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+instance/
+certs/
+
+# -------- Python Virtual Environments & Dependencies --------------
+.env/
+venv/
+env/
+ENV/
+.venvsmssvs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+#------- Pyhton Bytecodes & Cache -----------
+__pycache__/
+*.py[code]
+*.py.class
+.pytest_cache
+.my_py_cache
+
+
+# ---- IDE & Editor -------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njproj
+*.sln
+*.swp
+
+
+# ----- Operation system files ------
+.DS_Store
+.Thumbs.db
