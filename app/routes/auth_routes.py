@@ -88,10 +88,8 @@ def register():
             return jsonify({
                 "msg": "Validation Fields",
                 "errors": msg
-            }), 400
-            
+            }), 400    
     try:
-        
         user = UserService.create_user(data, data["password"])
         return jsonify({
             "msg": "You are registered. please going to login page.",
@@ -99,6 +97,9 @@ def register():
         })
     except Exception as e:
         db.session.rollback()
+        print("REGISTER ERROR: ", e)
+        import traceback
+        traceback.print_exc()
         return jsonify({"msg": f"Internal server error occurred: {e}."}), 500
 
 
@@ -118,7 +119,7 @@ def logout_access():
         return jsonify({"msg": f"An internal server errors occurred. {e}"})
     
 @auth_bp.post("/logout-refresh")
-@jwt_required()
+@jwt_required(refresh=True)
 def logout_refresh():
     try:
         jti = get_jwt()["jti"]
@@ -131,5 +132,3 @@ def logout_refresh():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"An internal server error occurred: {e}."}), 500
-
-        
