@@ -1,6 +1,10 @@
 from app.models.user import User
-from .token_blocklist import TokenBlocklist
+from .associations import user_roles, role_permissions
+from .role import Role
+from .permission import Permission
 
 __all__ = [
-    "User", "TokenBlocklist"
+    "User",
+    "user_roles", "role_permissions",
+    "Role", "Permission"
 ]

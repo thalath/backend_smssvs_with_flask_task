@@ -7,6 +7,8 @@ import re
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.validators import ValidationError
 
+from app.models.associations import user_roles
+
 class User(db.Model):
     __tablename__ ="users"
 
@@ -19,6 +21,8 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    roles = db.relationship("Role", secondary=user_roles, back_populates="users")
 
     def set_password(self, password: str) -> None:
         if len(password) < 8:
@@ -35,6 +39,22 @@ class User(db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+    
+    def has_role(self, role_name:str) -> bool:
+        return any(
+            role.name == role_name 
+            for role in self.roles
+        )
+    
+    def get_permission_codes(self) -> set[str]:
+        return {
+            perm.code 
+            for role in self.roles 
+            for perm in role.permissions
+        }
+    
+    def has_permission(self, permission_code: str) -> bool:
+        return permission_code in self.get_permission_codes()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
