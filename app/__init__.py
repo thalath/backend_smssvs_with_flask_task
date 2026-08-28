@@ -1,6 +1,6 @@
-from flask import Flask, redirect, url_for
+from flask import Flask
 
-from extensions import db, jwt, cors, migrate
+from extensions import db, jwt_manager, cors, migrate
 from config import Config
 
 def create_app(class_type: type[Config] = Config):
@@ -8,9 +8,9 @@ def create_app(class_type: type[Config] = Config):
     app.config.from_object(class_type)
     
     db.init_app(app)
-    jwt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)
+    jwt_manager.init_app(app)
     
     from app.models.token_blocklist import check_if_token_is_revoked
     
@@ -22,11 +22,6 @@ def create_app(class_type: type[Config] = Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(role_bp)
     app.register_blueprint(perm_bp)
-
-    @app.route("/", methods=["GET"])
-    def home():
-        return redirect(url_for("users.get_users"))
-    
     
     from .models.user import User
     from .models.permission import Permission

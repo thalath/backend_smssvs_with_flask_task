@@ -24,7 +24,8 @@ class Role(db.Model):
             "name": self.name,
             "description": self.description,
             "created_at": self.created_at,
-            "permissions": self.permissions,
+            "permissions": len(self.permissions),
+            "users": len(self.users),
         }
 
     def __repr__(self) -> str:

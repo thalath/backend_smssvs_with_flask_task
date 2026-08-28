@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, 
+    jwt_required, get_jwt, get_jwt_identity
+)
 from app.models.user import User
 from extensions import db
 from app.services.user_service import UserService
@@ -20,9 +23,10 @@ def login():
     if user and user.check_password(password):
         if not user.is_active:
             return jsonify({
-                "msg": "You account is Inactivated, Contact admin to activate account.",
-                "Lovely Admin": "Thalath => tunthalath@gmail.com"
-            }), 401
+                "status": 403, 
+                "success": False,
+                "msg": "you account is inactive, Contact admin to activate."
+            }), 403
         token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         return jsonify({
@@ -33,6 +37,7 @@ def login():
         }), 200
         
     return jsonify({
+        "status": 401,
         "msg": "Invalid email or password"
     }), 401
     
@@ -94,7 +99,7 @@ def register():
         return jsonify({
             "msg": "You are registered. please going to login page.",
             "info": user.to_dict()
-        })
+        }), 201
     except Exception as e:
         db.session.rollback()
         print("REGISTER ERROR: ", e)
@@ -119,7 +124,7 @@ def logout_access():
         return jsonify({"msg": f"An internal server errors occurred. {e}"})
     
 @auth_bp.post("/logout-refresh")
-@jwt_required(refresh=True)
+@jwt_required()
 def logout_refresh():
     try:
         jti = get_jwt()["jti"]
@@ -132,3 +137,19 @@ def logout_refresh():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"An internal server error occurred: {e}."}), 500
+    
+@auth_bp.post("/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    try:
+        user_id = get_jwt_identity()
+        access_token = create_access_token(identity=user_id)
+        return jsonify({
+            "access": access_token
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'msg': f'An Internal error occured: {str(e)}'
+        }), 200
+        

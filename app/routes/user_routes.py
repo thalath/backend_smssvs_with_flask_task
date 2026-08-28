@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify, request
-from app.decorators.permission import permission_required
-
+from app.middleware.permission import permission_required
+from flask_jwt_extended import jwt_required
 from app.services.user_service import UserService
 
 user_bp = Blueprint("users", __name__, url_prefix="/users")
 
 @user_bp.get("/")
+@jwt_required()
 @permission_required('user.user_list') # permission decorators is already included jwt-token-required
 def get_users():
     users = UserService.get_all()
@@ -21,6 +22,7 @@ def get_users():
     }), 200
     
 @user_bp.get("/<int:user_id>")
+@jwt_required()
 @permission_required('user.user_detail')
 def get_user_by_id(user_id: int):
     user = UserService.get_by_id(user_id)
@@ -37,6 +39,7 @@ def get_user_by_id(user_id: int):
     }), 200
 
 @user_bp.post("/")
+@jwt_required()
 @permission_required("user.create")
 def create_user():
     data = request.get_json()
@@ -54,6 +57,7 @@ def create_user():
     }), 201
     
 @user_bp.put("/<int:user_id>")
+@jwt_required()
 @permission_required('user.update')
 def edit(user_id: int):
     user = UserService.get_by_id(user_id)
@@ -78,16 +82,23 @@ def edit(user_id: int):
         
     
 @user_bp.delete("/<int:user_id>")
+@jwt_required()
 @permission_required('user.delete')
 def delete_user(user_id: int):
-    user = UserService.get_by_id(user_id)
-    if user is None:
+    try:
+        user = UserService.get_by_id(user_id)
+        if user is None or not user:
+            return jsonify({
+                "success": False,
+                "msg": "user not found"
+            }), 404
+        UserService.delete(user)
+        return jsonify({
+            "success": True,
+            "msg": "user deleted successfully"
+        }), 200
+    except Exception as e:
         return jsonify({
             "success": False,
-            "msg": "user not found"
+            "msg": f"An Internal error occured: {str(e)}"
         })
-    UserService.delete(user)
-    return jsonify({
-        "success": True,
-        "msg": "user deleted successfully"
-    }), 200

@@ -8,34 +8,46 @@ perm_bp = Blueprint("permissions", __name__, url_prefix="/permissions")
 @perm_bp.get("/")
 @jwt_required()
 def index():
-    perms = perm_service.get_all_permissions()
-    if not perms:
+    try:
+        perms = perm_service.get_all_permissions()
+        if not perms:
+            return jsonify({
+                "success": False,
+                "msg": "No permission yet!"
+            }), 404
+            
+        return jsonify({
+            "success": True,
+            "msg": "Permissions retrived successfully",
+            "data": [perm.to_dict() for perm in perms]
+        }), 200
+    except Exception as e:
         return jsonify({
             "success": False,
-            "msg": "No permission yet!"
-        }), 404
-        
-    return jsonify({
-        "success": True,
-        "msg": "Permissions retrived successfully",
-        "data": [perm.to_dict() for perm in perms]
-    }), 200
+            "msg": f"An internal occured error: {str(e)}"
+        }), 500
     
 @perm_bp.get("/<int:perm_id>")
 @jwt_required()
 def detail(perm_id: int):
-    perm = perm_service.get_permission_by_id(perm_id)
-    if perm is None:
+    try:
+        perm = perm_service.get_permission_by_id(perm_id)
+        if perm is None:
+            return jsonify({
+                "success": False,
+                "msg": f"Permission with ID: {perm_id} was not found."
+            }), 404
+            
+        return jsonify({
+            "success": True,
+            "msg": "Permission retrived successfully.",
+            "data": perm.to_dict()
+        }), 200
+    except Exception as e:
         return jsonify({
             "success": False,
-            "msg": f"Permission with ID: {perm_id} was not found."
-        }), 404
-        
-    return jsonify({
-        "success": True,
-        "msg": "Permission retrived successfully.",
-        "data": perm.to_dict()
-    }), 200
+            "msg": f"An internal error occured: {str(e)}"
+        }), 500
     
     
 @perm_bp.post("/")
@@ -66,4 +78,56 @@ def create():
         return jsonify({
             "success": False,
             "msg": f"An internal server error occured: {str(e)}"
+        }), 500
+        
+@perm_bp.put("/<int:perm_id>")
+@jwt_required()
+def edit_permission(perm_id: int):
+    perm = perm_service.get_permission_by_id(perm_id)
+    if not perm or perm is None:
+        return jsonify({
+            "success": False,
+            "msg": f"No permission with ID: {str(perm_id)}"
+        }), 404
+        
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            "success": False,
+            "msg": "Invalid or Missing JSON payload."
+        }), 400
+    try:
+        permission = perm_service.update_permission(perm, data)
+        return jsonify({
+            "success": True,
+            "msg": "permission updated successfully.",
+            "data": permission.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "msg": f"An internal error occured: {str(e)}"
+        }), 500
+        
+
+@perm_bp.delete("/<int:perm_id>")
+@jwt_required()
+def delete_permission(perm_id: int):
+    perm = perm_service.get_permission_by_id(perm_id)
+    if not perm or perm is None:
+        return jsonify({
+            "suceces": False,
+            "msg": f"Permission with ID: {perm_id} was not found."
+        }), 404
+        
+    try:
+        perm_service.delete_permission(perm)
+        return jsonify({
+            "success": True,
+            "msg": "Permission deleted successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "msg": f"An Internal error occured: {str(e)}"
         }), 500

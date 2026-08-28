@@ -1,4 +1,4 @@
-from extensions import db, jwt
+from extensions import db, jwt_manager
 from datetime import datetime, timezone
 
 
@@ -10,9 +10,7 @@ class TokenBlocklist(db.Model):
     type = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-
-
-@jwt.token_in_blocklist_loader
+@jwt_manager.token_in_blocklist_loader
 def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     jti = jwt_payload["jti"]
     token = db.session.scalar(
