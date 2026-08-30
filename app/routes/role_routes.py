@@ -2,6 +2,8 @@ from flask import request, jsonify, Blueprint
 from flask_jwt_extended import jwt_required
 
 from ..services import RoleService
+from ..models import Permission
+from extensions import db
 
 role_bp = Blueprint("roles", __name__, url_prefix="/roles")
 
@@ -26,8 +28,9 @@ def detail(role_id: int):
         }), 404
         
     return jsonify({
+        "success": True,
         "msg": "role retrived successfully.",
-        "INFO": role.to_dict()
+        "data": role.to_dict()
     }), 200
     
     
@@ -42,13 +45,18 @@ def create_role():
                 "msg": "Invalid or Missing JSON payload."
             }), 400
             
-        permission = data['permission_ids'] or []
-        role = RoleService.create_role(data, permission)
+        permission_ids = data['permission_ids']
+        perm = []
+        
+        for permission in permission_ids:
+            perm.append(permission)
+        
+        role = RoleService.create_role(data, perm)
         return jsonify({
             'success': True,
             'msg': 'role created successfully',
-            'INFO': role.to_dict()
-        }), 200
+            'data': role.to_dict()
+        }), 201
     except Exception as e:
         return jsonify({
             "success": False,
@@ -74,11 +82,15 @@ def edit_role(role_id: int):
                 'msg': 'Invalid or Missing JSON payload.'
             }), 400
             
-        permission = data['permission_ids'] or []
-        new_role = RoleService.update_role(role, data, permission)
+        perm = []
+        permission_ids = data['permission_ids']
+        for permission in permission_ids:
+            perm.append(permission)
+        
+        new_role = RoleService.update_role(role, data, perm)
 
         return jsonify({
-            'success': False,
+            'success': True,
             'INFO': new_role.to_dict()
         }), 200
     except Exception as e:
@@ -97,6 +109,7 @@ def delete_role(role_id: int):
                 'success': False,
                 'msg': f'Role with ID {role_id} was not found'
             }), 404
+        RoleService.delete_role(role)
             
         return jsonify({
             'success': True,

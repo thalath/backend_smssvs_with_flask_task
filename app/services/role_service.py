@@ -21,7 +21,7 @@ class RoleService:
             description=data.get("description") or ""
         )
         
-        if permission_ids:
+        if permission_ids is not None:
             permissions = db.session.scalars(
                 db.select(Permission).filter(
                     Permission.id.in_(permission_ids)

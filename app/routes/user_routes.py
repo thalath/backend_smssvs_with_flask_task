@@ -7,7 +7,7 @@ user_bp = Blueprint("users", __name__, url_prefix="/users")
 
 @user_bp.get("/")
 @jwt_required()
-@permission_required('user.user_list') # permission decorators is already included jwt-token-required
+@permission_required('user.views') # permission decorators is already included jwt-token-required
 def get_users():
     users = UserService.get_all()
     if users is None:
@@ -58,7 +58,7 @@ def create_user():
     
 @user_bp.put("/<int:user_id>")
 @jwt_required()
-@permission_required('user.update')
+@permission_required('user.edit')
 def edit(user_id: int):
     user = UserService.get_by_id(user_id)
     data = request.get_json()
